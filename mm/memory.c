@@ -1465,24 +1465,6 @@ static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
 		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
 }
 
-static inline bool can_follow_write_pte(pte_t pte, struct page *page,
-					unsigned int flags)
-{
-	if (pte_write(pte))
-		return true;
-
-	/*
-	 * Make sure that we are really following CoWed page. We do not really
-	 * have to care about exclusiveness of the page because we only want
-	 * to ensure that once COWed page hasn't disappeared in the meantime
-	 * or it hasn't been merged to a KSM page.
-	 */
-	if ((flags & FOLL_FORCE) && (flags & FOLL_COW))
-		return page && PageAnon(page) && !PageKsm(page);
-
-	return false;
-}
-
 /**
  * follow_page - look up a page descriptor from a user-virtual address
  * @vma: vm_area_struct mapping @address
@@ -1611,7 +1593,7 @@ split_fallthrough:
 			unlock_page(page);
 		}
 	}
-
+unlock:
 	pte_unmap_unlock(ptep, ptl);
 out:
 	return page;
