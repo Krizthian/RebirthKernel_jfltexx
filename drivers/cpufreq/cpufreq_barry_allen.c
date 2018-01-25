@@ -1274,7 +1274,10 @@ static struct attribute *barry_allen_attributes[] = {
 	NULL,
 };
 
-
+static struct attribute_group barry_allen_attr_group = {
+	.attrs = barry_allen_attributes,
+	.name = "barry_allen",
+};
 
 static int cpufreq_barry_allen_idle_notifier(struct notifier_block *nb,
 					     unsigned long val,
@@ -1526,4 +1529,5 @@ MODULE_AUTHOR("Javier Sayago <admin@lonasdigital.com>");
 MODULE_DESCRIPTION("'cpufreq_barry_allen' - A cpufreq governor for "
 	"Latency sensitive workloads");
 MODULE_LICENSE("GPL");
+
 
