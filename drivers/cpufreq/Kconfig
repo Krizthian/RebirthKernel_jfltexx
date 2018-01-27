@@ -67,6 +67,11 @@ config CPU_FREQ_DEFAULT_GOV_WHEATLEY
         help
           Use the CPUFreq governor 'wheatley' as default.
 
+config CPU_FREQ_DEFAULT_GOV_DARKNESS
+        bool "darkness"
+        select CPU_FREQ_GOV_DARKNESS
+        help
+          Use the CPUFreq governor 'darkness' as default.
 
 config CPU_FREQ_DEFAULT_GOV_PERFORMANCE
 	bool "performance"
@@ -144,6 +149,10 @@ config CPU_FREQ_GOV_PERFORMANCE
 config CPU_FREQ_GOV_WHEATLEY
     tristate "'wheatley' cpufreq governor"
     depends on CPU_FREQ
+
+config CPU_FREQ_GOV_DARKNESS
+        tristate "'darkness' cpufreq governor"
+        depends on CPU_FREQ
 
 config CPU_FREQ_GOV_POWERSAVE
 	tristate "'powersave' governor"
