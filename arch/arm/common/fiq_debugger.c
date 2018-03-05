@@ -29,7 +29,6 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/smp.h>
-#include <linux/sysrq.h>
 #include <linux/timer.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
@@ -575,38 +574,25 @@ static void debug_irq_exec(struct fiq_debugger_state *state, char *cmd)
 
 static void debug_help(struct fiq_debugger_state *state)
 {
-	debug_printf(state,
-			"FIQ Debugger commands:\n");
-	if (sysrq_on()) {
-		debug_printf(state,
-			" pc            PC status\n"
-			" regs          Register dump\n"
-			" allregs       Extended Register dump\n"
-			" bt            Stack trace\n");
-		debug_printf(state,
-			" reboot        Reboot\n"
-			" irqs          Interrupt status\n"
-			" kmsg          Kernel log\n"
-			" version       Kernel version\n");
-		debug_printf(state,
-			" cpu           Current CPU\n"
-			" cpu <number>  Switch to CPU<number>\n"
-			" sysrq         sysrq options\n"
-			" sysrq <param> Execute sysrq with <param>\n");
-	} else {
-		debug_printf(state,
-			" reboot        Reboot\n"
-			" irqs          Interrupt status\n");
-	}
-	debug_printf(state,
-			" sleep         Allow sleep while in FIQ\n"
-			" nosleep       Disable sleep while in FIQ\n"
-			" console       Switch terminal to console\n"
-			" ps            Process list\n");
+	debug_printf(state,	"FIQ Debugger commands:\n"
+				" pc            PC status\n"
+				" regs          Register dump\n"
+				" allregs       Extended Register dump\n"
+				" bt            Stack trace\n"
+				" reboot        Reboot\n"
+				" irqs          Interupt status\n"
+				" kmsg          Kernel log\n"
+				" version       Kernel version\n");
+	debug_printf(state,	" sleep         Allow sleep while in FIQ\n"
+				" nosleep       Disable sleep while in FIQ\n"
+				" console       Switch terminal to console\n"
+				" cpu           Current CPU\n"
+				" cpu <number>  Switch to CPU<number>\n");
+	debug_printf(state,	" ps            Process list\n"
+				" sysrq         sysrq options\n"
+				" sysrq <param> Execute sysrq with <param>\n");
 #ifdef CONFIG_KGDB
-	if (fiq_kgdb_enable) {
-		debug_printf(state,
-			" kgdb          Enter kernel debugger\n");
+	debug_printf(state,	" kgdb          Enter kernel debugger\n");
 #endif
 }
 
@@ -636,24 +622,19 @@ static bool debug_fiq_exec(struct fiq_debugger_state *state,
 	if (!strcmp(cmd, "help") || !strcmp(cmd, "?")) {
 		debug_help(state);
 	} else if (!strcmp(cmd, "pc")) {
-		if (sysrq_on())
-			debug_printf(state, " pc %08x cpsr %08x mode %s\n",
-				regs[15], regs[16], mode_name(regs[16]));
+		debug_printf(state, " pc %08x cpsr %08x mode %s\n",
+			regs[15], regs[16], mode_name(regs[16]));
 	} else if (!strcmp(cmd, "regs")) {
-		if (sysrq_on())
-			dump_regs(state, regs);
+		dump_regs(state, regs);
 	} else if (!strcmp(cmd, "allregs")) {
-		if (sysrq_on())
-			dump_allregs(state, regs);
+		dump_allregs(state, regs);
 	} else if (!strcmp(cmd, "bt")) {
-		if (sysrq_on())
-			dump_stacktrace(state, (struct pt_regs *)regs,
-					100, svc_sp);
+		dump_stacktrace(state, (struct pt_regs *)regs, 100, svc_sp);
 	} else if (!strncmp(cmd, "reboot", 6)) {
 		cmd += 6;
 		while (*cmd == ' ')
 			cmd++;
-		if (*cmd && sysrq_on()) {
+		if (*cmd) {
 			char tmp_cmd[32];
 			strlcpy(tmp_cmd, cmd, sizeof(tmp_cmd));
 			kernel_restart(tmp_cmd);
@@ -663,12 +644,9 @@ static bool debug_fiq_exec(struct fiq_debugger_state *state,
 	} else if (!strcmp(cmd, "irqs")) {
 		dump_irqs(state);
 	} else if (!strcmp(cmd, "kmsg")) {
-		if (sysrq_on())
-			dump_kernel_log(state);
+		dump_kernel_log(state);
 	} else if (!strcmp(cmd, "version")) {
-		if (sysrq_on())
-			debug_printf(state, "%s\n",
-					linux_banner);
+		debug_printf(state, "%s\n", linux_banner);
 	} else if (!strcmp(cmd, "sleep")) {
 		state->no_sleep = false;
 		debug_printf(state, "enabling sleep\n");
@@ -679,17 +657,14 @@ static bool debug_fiq_exec(struct fiq_debugger_state *state,
 		state->console_enable = true;
 		debug_printf(state, "console mode\n");
 	} else if (!strcmp(cmd, "cpu")) {
-		if (sysrq_on())
-			debug_printf(state, "cpu %d\n",
-					state->current_cpu);
-	} else if (!strncmp(cmd, "cpu ", 4) && sysrq_on()) {
+		debug_printf(state, "cpu %d\n", state->current_cpu);
+	} else if (!strncmp(cmd, "cpu ", 4)) {
 		unsigned long cpu = 0;
 		if (strict_strtoul(cmd + 4, 10, &cpu) == 0)
 			switch_cpu(state, cpu);
 		else
 			debug_printf(state, "invalid cpu\n");
-		debug_printf(state, "cpu %d\n",
-				    state->current_cpu);
+		debug_printf(state, "cpu %d\n", state->current_cpu);
 	} else {
 		if (state->debug_busy) {
 			debug_printf(state,
